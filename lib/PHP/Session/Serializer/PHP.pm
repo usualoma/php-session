@@ -34,6 +34,11 @@ sub encode {
 
 sub do_encode {
     my($self, $value) = @_;
+
+    if ( eval { $value->can('TO_JSON') } ) {
+	$value = $value->TO_JSON();
+    }
+
     if (! defined $value) {
 	return $self->encode_null($value);
     }
@@ -56,6 +61,12 @@ sub do_encode {
     }
     elsif (ref $value eq 'PHP::Session::Object') {
 	return $self->encode_object($value);
+    }
+    elsif (ref $value eq 'SCALAR'
+	&& defined $$value
+	&& $$value =~ m/^(?:0|1)$/ )
+    {
+	return sprintf "b:%d;", $$value;
     }
     else {
 	_croak("Can't encode ", ref($value));
